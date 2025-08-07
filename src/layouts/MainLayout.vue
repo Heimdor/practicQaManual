@@ -1,41 +1,99 @@
 <template>
   <q-layout view="lHh Lpr lFf">
-    <q-header elevated>
+    <q-header elevated class="bg-primary text-white">
       <q-toolbar>
-        <q-btn
-          flat
-          dense
-          round
-          icon="menu"
-          aria-label="Menu"
-          @click="toggleLeftDrawer"
-        />
+        <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
 
         <q-toolbar-title>
-          Quasar App
+          <router-link to="/" class="text-white no-decoration">
+            QA Test Shop
+          </router-link>
         </q-toolbar-title>
 
-        <div>Quasar v{{ $q.version }}</div>
+        <q-space />
+
+        <!-- Cart button with bug: shows wrong count -->
+        <q-btn flat round icon="shopping_cart" @click="goToCart">
+          <q-badge color="red" floating>{{ cartItemsCount + 1 }}</q-badge>
+        </q-btn>
+
+        <!-- User menu -->
+        <q-btn-dropdown flat round icon="account_circle">
+          <q-list>
+            <q-item v-if="!user.isLoggedIn" clickable @click="goToLogin">
+              <q-item-section>
+                <q-item-label>Войти</q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <template v-else>
+              <q-item clickable @click="goToProfile">
+                <q-item-section>
+                  <q-item-label>{{ user.name }}</q-item-label>
+                  <q-item-label caption>Профиль</q-item-label>
+                </q-item-section>
+              </q-item>
+
+              <q-item clickable @click="goToBookings">
+                <q-item-section>
+                  <q-item-label>Мои бронирования</q-item-label>
+                </q-item-section>
+              </q-item>
+
+              <q-separator />
+
+              <q-item clickable @click="logout">
+                <q-item-section>
+                  <q-item-label>Выйти</q-item-label>
+                </q-item-section>
+              </q-item>
+            </template>
+          </q-list>
+        </q-btn-dropdown>
       </q-toolbar>
     </q-header>
 
-    <q-drawer
-      v-model="leftDrawerOpen"
-      show-if-above
-      bordered
-    >
+    <q-drawer v-model="leftDrawerOpen" show-if-above bordered>
       <q-list>
-        <q-item-label
-          header
-        >
-          Essential Links
+        <q-item-label header>
+          Навигация
         </q-item-label>
 
-        <EssentialLink
-          v-for="link in linksList"
-          :key="link.title"
-          v-bind="link"
-        />
+        <q-item clickable @click="goTo('/')">
+          <q-item-section avatar>
+            <q-icon name="home" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Главная</q-item-label>
+          </q-item-section>
+        </q-item>
+
+        <q-item clickable @click="goTo('/shop')">
+          <q-item-section avatar>
+            <q-icon name="store" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Магазин</q-item-label>
+          </q-item-section>
+        </q-item>
+
+        <q-item clickable @click="goTo('/hotels')">
+          <q-item-section avatar>
+            <q-icon name="hotel" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Отели</q-item-label>
+          </q-item-section>
+        </q-item>
+
+        <q-item clickable @click="goTo('/cart')">
+          <q-item-section avatar>
+            <q-icon name="shopping_cart" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Корзина ({{ cartItemsCount }})</q-item-label>
+          </q-item-section>
+        </q-item>
       </q-list>
     </q-drawer>
 
@@ -47,56 +105,49 @@
 
 <script setup>
 import { ref } from 'vue'
-import EssentialLink from 'components/EssentialLink.vue'
+import { useRouter } from 'vue-router'
+import { useMainStore } from 'stores/main'
+import { storeToRefs } from 'pinia'
 
-const linksList = [
-  {
-    title: 'Docs',
-    caption: 'quasar.dev',
-    icon: 'school',
-    link: 'https://quasar.dev'
-  },
-  {
-    title: 'Github',
-    caption: 'github.com/quasarframework',
-    icon: 'code',
-    link: 'https://github.com/quasarframework'
-  },
-  {
-    title: 'Discord Chat Channel',
-    caption: 'chat.quasar.dev',
-    icon: 'chat',
-    link: 'https://chat.quasar.dev'
-  },
-  {
-    title: 'Forum',
-    caption: 'forum.quasar.dev',
-    icon: 'record_voice_over',
-    link: 'https://forum.quasar.dev'
-  },
-  {
-    title: 'Twitter',
-    caption: '@quasarframework',
-    icon: 'rss_feed',
-    link: 'https://twitter.quasar.dev'
-  },
-  {
-    title: 'Facebook',
-    caption: '@QuasarFramework',
-    icon: 'public',
-    link: 'https://facebook.quasar.dev'
-  },
-  {
-    title: 'Quasar Awesome',
-    caption: 'Community Quasar projects',
-    icon: 'favorite',
-    link: 'https://awesome.quasar.dev'
-  }
-]
+const router = useRouter()
+const store = useMainStore()
+const { cartItemsCount, user } = storeToRefs(store)
 
 const leftDrawerOpen = ref(false)
 
-function toggleLeftDrawer () {
+function toggleLeftDrawer() {
   leftDrawerOpen.value = !leftDrawerOpen.value
 }
+
+function goTo(path) {
+  router.push(path)
+  leftDrawerOpen.value = false
+}
+
+function goToCart() {
+  router.push('/cart')
+}
+
+function goToLogin() {
+  router.push('/login')
+}
+
+function goToProfile() {
+  router.push('/profile')
+}
+
+function goToBookings() {
+  router.push('/bookings')
+}
+
+function logout() {
+  store.logout()
+  router.push('/')
+}
 </script>
+
+<style scoped>
+.no-decoration {
+  text-decoration: none;
+}
+</style>
